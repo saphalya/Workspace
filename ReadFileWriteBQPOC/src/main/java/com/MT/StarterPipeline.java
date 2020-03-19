@@ -49,7 +49,7 @@ public class StarterPipeline {
 
 	@ProcessElement
 	  public void processElement(ProcessContext c) {
-	      DateFormat currentDate = new SimpleDateFormat("yyyy-MM-dd");
+	      //DateFormat currentDate = new SimpleDateFormat("yyyy-MM-dd");
 	     
 	      //Tokenize the row based on comma
 	      String[] attribute = c.element().split(",");
