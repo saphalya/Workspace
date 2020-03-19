@@ -86,15 +86,14 @@ public class StarterPipeline {
     
     PCollection<TableRow> namesTable =
    	pipeline.apply(BigQueryIO.readTableRows().from(Names_2014_TABLE));
-    final TupleTag<String> nameInfoTag = new TupleTag<>();
-    
+        
     PCollection<String> TypeInfo =
     		namesTable.apply(ParDo.of(new ExtractEventDataFn()));
    
    //Write To A File 
    TypeInfo.
     apply("WriteToText",
-    	    TextIO.write().to("gs://my_bucket_8627/VZT")
+    	    TextIO.write().to("gs://my_bucket_8627/VZT/outbound")
     	                .withSuffix(".csv"));
 
    	//Write To Big Query
