@@ -92,7 +92,7 @@ public class StarterPipeline {
    
    //Write To A File 
    TypeInfo.
-    apply("WriteToText",
+    apply("Write To Text",
     	    TextIO.write().to("gs://my_bucket_8627/VZT/outbound")
     	                .withSuffix(".csv"));
 
