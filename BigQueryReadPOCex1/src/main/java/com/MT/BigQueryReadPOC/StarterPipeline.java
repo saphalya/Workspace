@@ -51,7 +51,12 @@ public class StarterPipeline {
   private static final String Names_2014_TABLE = "mt-poc:babynames.name_2014";
   
   static class ExtractEventDataFn extends DoFn<TableRow, String> {
-	    @ProcessElement
+	    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+		@ProcessElement
 	      public void processElement(ProcessContext compute) {
 	      TableRow row = compute.element();
 	      String name = (String) row.get("name");
@@ -95,12 +100,6 @@ public class StarterPipeline {
     apply("Write To Text",
     	    TextIO.write().to("gs://my_bucket_8627/VZT/outbound")
     	                .withSuffix(".csv"));
-
-   	//Write To Big Query
-   
-
     pipeline.run().waitUntilFinish();
   }
-
-
 }
