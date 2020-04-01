@@ -91,8 +91,9 @@ public class StarterPipeline {
 	      
 	      String playerPhone = (String) row.get("phone");
 	      String playerCity = (String) row.get("city");
-	      String playerTeam = (String) row.get("team");	      
-	      String eventInfo = playerCity + ", " + playerTeam;
+	      //String playerTeam = (String) row.get("team");	      
+	      //String eventInfo = playerCity + ", " + playerTeam;
+	      String eventInfo = playerCity;
 	      c.output(KV.of(playerPhone, eventInfo));	     
 	    }
 	  }
@@ -106,13 +107,15 @@ public class StarterPipeline {
 	    PCollection<KV<String, String>> playerInfo = playerTableRow.apply(ParDo.of(new ExtractPlayerDataFn()));
 	    PCollection<KV<String, String>> teamInfo = playerTeamTableRow.apply(ParDo.of(new ExtractPlayerTeamInfoFn()));
 	    
+	    //Group By
+	    PCollection<KV<String, CoGbkResult>> kvpCollection = KeyedPCollectionTuple
+	    														.of(playerInfoTag, playerInfo)
+	    														.and(teamInfoTag, teamInfo)
+	    														.apply(CoGroupByKey.<String>create());
 	    
-	    PCollection<KV<String, CoGbkResult>> kvpCollection = KeyedPCollectionTuple.of(playerInfoTag, playerInfo)
-				  											.and(teamInfoTag, teamInfo)
-				  											.apply(CoGroupByKey.<String>create());
-	    
-	    PCollection<KV<String, String>> finalResultCollection = kvpCollection.apply(ParDo
-	    	    		  													.of(new DoFn<KV<String, CoGbkResult>, KV<String, String>>() {
+	    PCollection<KV<String, String>> finalResultCollection = kvpCollection
+	    															.apply(ParDo
+	    															.of(new DoFn<KV<String, CoGbkResult>, KV<String, String>>() {
 	    	        	private static final long serialVersionUID = 1L;
 
 						@ProcessElement
@@ -122,7 +125,8 @@ public class StarterPipeline {
 	    	            
 	    	            String playerTeam = "none";
 	    	            playerTeam = e.getValue().getOnly(teamInfoTag);
-	    	           
+	    	            
+	    	            //Phone number check
 	    	            for (String eventInfo : c.element().getValue().getAll(playerInfoTag)) {
 	    	              // Generate a string that combines information from both collection values
 	    	              c.output(KV.of(playerPhone, playerTeam + ", " + eventInfo));
@@ -130,19 +134,20 @@ public class StarterPipeline {
 	    	          }
 	    	      }));
 	    
-	    PCollection<String> formattedResults = finalResultCollection.apply(ParDo
-	    															.of(new DoFn<KV<String, String>, String>() {
+	    PCollection<String> formattedResults = finalResultCollection
+	    										.apply(ParDo
+	    										.of(new DoFn<KV<String, String>, String>() {
 	            	private static final long serialVersionUID = 1L;
 
 					@ProcessElement
 	              public void processElement(ProcessContext c) {
-	                //String outputstring = "Phone Number: " + c.element().getKey() + ", " + c.element().getValue();
-					String outputstring = c.element().getKey() + ", " + c.element().getValue();
+					System.out.println("Key: "+c.element().getKey() +" Value:"+c.element().getValue());
+	                String outputstring = c.element().getKey() + ", " + c.element().getValue();
 	                c.output(outputstring);
 	              }
 	            }));
-	        return formattedResults;
-	      
+	    
+	        return formattedResults;	      
   }
   
   
@@ -172,8 +177,7 @@ public class StarterPipeline {
 	//Create Name Value Pair For Player
 	PCollection<String> finalResults = joinEvents(playerTableRow, playerTeamTableRow);
 	
-	//write to a file
-	
+	//write to a file	
 	finalResults.apply("Write To Text",
     	    TextIO.write().to(targetFileLocation+"Player_").withSuffix(".csv"));
 	
